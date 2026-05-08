@@ -1,2 +1,190 @@
 FINISH CONCEPTUAL SESSION FOR OLD MODULE:
 MISSION 02(L2B3)- MISSON -04 RECONNECT WITH REDUX
+
+
+
+
+-----------------------------------------
+You’re learning the main trick of MongoDB schema design:
+Core Idea: “Collection Closeness”
+Ask:
+
+“How closely related is the data?”
+
+If data is:
+
+
+Always used together → Embed
+
+
+Large / separate / reusable → Reference
+
+
+
+1. EMBEDDING (Very Close Data)
+Example: Tour + Locations
+A location is meaningless without the tour.
+You usually fetch them together.
+So embed inside Tour.
+// Tour Collection{   _id: ObjectId("tour1"),   title: "Cox's Bazar Tour",   locations: [      {         area: "St. Martin",         day: 1      },      {         area: "Himchori",         day: 2      }   ]}
+Why Embedding?
+Because:
+✅ tightly connected
+✅ small data
+✅ always needed with Tour
+✅ no separate query needed
+
+2. REFERENCING (Loose Relationship)
+Example: Tour ↔ Reviews
+A tour can have:
+
+
+thousands of reviews
+
+
+reviews added frequently
+
+
+reviews queried separately
+
+
+So DO NOT embed all reviews.
+Instead use references.
+
+Parent Referencing
+Child stores parent ID.
+// Review Collection{   _id: ObjectId("review1"),   message: "Amazing tour!",   rating: 5,   tourId: ObjectId("tour1"),   userId: ObjectId("user1")}
+This is called:
+Child → Parent Reference
+Because Review (child) stores Tour ID (parent).
+
+Why NOT Embed Reviews?
+Imagine:
+Tour {   reviews: [10000 reviews]}
+Problems:
+❌ huge document
+❌ slow updates
+❌ MongoDB 16MB limit
+❌ every tour fetch loads all reviews
+So referencing is better.
+
+3. Booking Example
+A booking belongs to:
+
+
+one user
+
+
+one tour
+
+
+Booking is independent.
+So use references.
+// Booking Collection{   _id: ObjectId("booking1"),   userId: ObjectId("user1"),   tourId: ObjectId("tour1"),   bookingDate: "2026-05-08"}
+
+Real “Closeness” Rule
+VERY CLOSE → Embed
+Example:
+
+
+tour locations
+
+
+address
+
+
+social links
+
+
+small settings
+
+
+user: {   name: "Rahul",   socials: {      facebook: "...",      instagram: "..."   }}
+
+MEDIUM / LOOSE → Reference
+Example:
+
+
+reviews
+
+
+bookings
+
+
+payments
+
+
+comments
+
+
+orders
+
+
+Because:
+
+
+grow large
+
+
+queried separately
+
+
+reused
+
+
+updated frequently
+
+
+
+Easy Memory Trick
+“Can this data live alone?”
+If NO → Embed
+Example:
+
+
+location inside tour
+
+
+profile settings
+
+
+
+If YES → Reference
+Example:
+
+
+review
+
+
+booking
+
+
+payment
+
+
+Because they have their own lifecycle.
+
+Relationship Types
+One-to-One
+Mostly embed.
+User {   profile: {      age: 22,      bio: "..."   }}
+
+One-to-Many
+Depends on size.
+Small many → Embed
+Tour {   locations: []}
+Large many → Reference
+Review {   tourId}
+
+Final Visualization
+EMBEDDING
+Tour └── locations[]
+Same document.
+
+REFERENCING
+Tour ---- Review   ↑review stores tourId
+Separate collections.
+
+Golden Interview Line
+
+“Embed when data is closely related and frequently accessed together. Reference when data is large, independent, or grows over time.”
